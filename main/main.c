@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "modbus_rtu_slave_esp.h"
+#include "mqtt_kincony.h"
 
 static i2c_master_bus_handle_t i2c_bus = NULL;
 

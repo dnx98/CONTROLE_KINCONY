@@ -3,13 +3,21 @@ idf_component_register(SRCS
     "entradas_digitais/entradas_kincony.c"
     "saidas_digitais/saidas_digitais_kincony.c"
     "modbus_rtu_slave/modbus_rtu_slave_esp.c"
+    "wifi/wifi_kincony.c"
+    "mqtt/mqtt_kincony.c"
     INCLUDE_DIRS
     "."
     "entradas_digitais"
     "saidas_digitais"
     "modbus_rtu_slave"
+    "wifi"
+    "mqtt"
     REQUIRES
     freertos
     driver
     esp-modbus
+    esp_wifi
+    esp_event
+    nvs_flash
+    mqtt
 )
