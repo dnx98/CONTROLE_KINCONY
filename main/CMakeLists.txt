@@ -1,10 +1,12 @@
 idf_component_register(SRCS
     "main.c"
     "entradas_digitais/entradas_kincony.c"
+    "saidas_digitais/saidas_digitais_kincony.c"
     "modbus_rtu_slave/modbus_rtu_slave_esp.c"
     INCLUDE_DIRS
     "."
     "entradas_digitais"
+    "saidas_digitais"
     "modbus_rtu_slave"
     REQUIRES
     freertos

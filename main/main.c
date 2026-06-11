@@ -1,4 +1,5 @@
 #include "entradas_kincony.h"
+#include "saidas_digitais_kincony.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "modbus_rtu_slave_esp.h"
