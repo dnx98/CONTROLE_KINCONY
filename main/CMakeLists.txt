@@ -5,6 +5,8 @@ idf_component_register(SRCS
     "modbus_rtu_slave/modbus_rtu_slave_esp.c"
     "wifi/wifi_kincony.c"
     "mqtt/mqtt_kincony.c"
+    "ota/ota_github.c"
+
     INCLUDE_DIRS
     "."
     "entradas_digitais"
@@ -12,6 +14,8 @@ idf_component_register(SRCS
     "modbus_rtu_slave"
     "wifi"
     "mqtt"
+    "ota"
+
     REQUIRES
     freertos
     driver
@@ -20,4 +24,9 @@ idf_component_register(SRCS
     esp_event
     nvs_flash
     mqtt
+    esp_http_client 
+    esp_https_ota 
+    esp-tls 
+    json 
+    app_update
 )
