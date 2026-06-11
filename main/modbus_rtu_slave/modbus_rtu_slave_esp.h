@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "esp_err.h"
+#include "driver/uart.h"
 
 // ===============================
 // CONFIGURAÇÃO DO MODBUS

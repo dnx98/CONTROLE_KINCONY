@@ -1,6 +1,7 @@
 #include "entradas_kincony.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "modbus_rtu_slave_esp.h"
 
 static i2c_master_bus_handle_t i2c_bus = NULL;
 

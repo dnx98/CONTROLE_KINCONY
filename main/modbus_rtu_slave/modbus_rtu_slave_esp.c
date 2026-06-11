@@ -1,8 +1,8 @@
-#include "modbus_rtu_slave_esp.h"
-
+#include "esp_err.h"
 #include "esp_log.h"
 #include "driver/uart.h"
-#include "mbcontroller.h"
+#include "modbus_rtu_slave_esp.h"
+#include "esp_modbus_slave.h"
 
 static const char *TAG = "MB_RTU_SLAVE";
 
