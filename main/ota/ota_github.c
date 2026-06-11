@@ -7,7 +7,7 @@
 #include "ota_github.h"
 
 void app_main(void)
-{
+{ 
     wifi_app_init();
 
     if (wifi_app_is_connected())

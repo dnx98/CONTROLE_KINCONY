@@ -14,7 +14,7 @@ INCLUINDO O CABEÇALHO
 #include "saidas_digitais_kincony.h"
 
 static i2c_master_bus_handle_t i2c_bus = NULL;
-
+ 
 void app_main(void)
 {
 

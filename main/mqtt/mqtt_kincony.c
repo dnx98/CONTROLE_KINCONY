@@ -8,7 +8,7 @@
  * Autor: DANIEL
  * Versão: 1.0
  */
-
+ 
 /*------------------------ EXEMPLO DE USO NO MAIN.C ------------------------
 INCLUINDO O CABEÇALHO
 #include "mqtt_kincony.h"

@@ -6,7 +6,7 @@ idf_component_register(SRCS
     "wifi/wifi_kincony.c"
     "mqtt/mqtt_kincony.c"
     "ota/ota_github.c"
-
+ 
     INCLUDE_DIRS
     "."
     "entradas_digitais"

@@ -5,7 +5,7 @@
  * Utiliza o PCF8574 para ler o estado das entradas via I2C.
  *
  * Criado em: 2024-06-01
- * Autor: DANIEL
+ * Autor: DANIEL 
  * Versão: 1.0
  */
 

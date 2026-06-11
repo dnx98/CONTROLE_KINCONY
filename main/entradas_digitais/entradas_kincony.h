@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "esp_err.h"
 #include "driver/i2c_master.h"
-
+ 
 #define ENTRADAS_KINCONY_ADDR        0x24
 #define ENTRADAS_KINCONY_QTD         8
 

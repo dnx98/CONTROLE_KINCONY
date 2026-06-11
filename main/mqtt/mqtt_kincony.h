@@ -7,7 +7,7 @@
 
 #define MQTT_KINCONY_BROKER_URI      "mqtt://192.168.0.100:1883"
 //#define MQTT_KINCONY_BROKER_URI "mqtt://192.168.0.100:1883"
-
+ 
 #define MQTT_TOPIC_STATUS            "kincony/status"
 #define MQTT_TOPIC_ENTRADAS          "kincony/entradas"
 #define MQTT_TOPIC_SAIDAS            "kincony/saidas"

@@ -8,7 +8,7 @@
 // ===============================
 // CONFIGURAÇÃO DO MODBUS
 // ===============================
-
+ 
 #define MB_RTU_SLAVE_ID        1
 #define MB_RTU_UART_PORT       UART_NUM_2
 #define MB_RTU_TX_PIN          17

@@ -8,7 +8,7 @@
 #define WIFI_KINCONY_TENTATIVAS_MAX     10
 
 esp_err_t Wifi_Kincony_Init(const char *ssid, const char *senha);
-
+ 
 bool Wifi_Kincony_IsConectado(void);
 bool Wifi_Kincony_IsFalha(void);
 

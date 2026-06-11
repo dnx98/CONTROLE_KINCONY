@@ -10,7 +10,7 @@
 #define SAIDAS_KINCONY_QTD         8
 
 typedef enum
-{
+{ 
     SAIDA_1 = 0,
     SAIDA_2,
     SAIDA_3,

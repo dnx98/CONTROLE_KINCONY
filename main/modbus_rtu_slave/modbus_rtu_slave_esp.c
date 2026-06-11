@@ -7,7 +7,7 @@
 static const char *TAG = "MB_RTU_SLAVE";
 
 static void *mb_handle = NULL;
-
+ 
 uint16_t holding_registers[MB_HOLDING_REG_QTD] = {0};
 
 esp_err_t ModbusRTU_Slave_Init(void)
