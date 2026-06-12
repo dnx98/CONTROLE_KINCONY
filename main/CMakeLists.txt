@@ -6,6 +6,7 @@ idf_component_register(SRCS
     "wifi/wifi_kincony.c"
     "mqtt/mqtt_kincony.c"
     "ota/ota_github.c"
+    "logica_controle/logica_controle.c"
  
     INCLUDE_DIRS
     "."
@@ -15,7 +16,7 @@ idf_component_register(SRCS
     "wifi"
     "mqtt"
     "ota"
-
+    "logica_controle"
     REQUIRES
     freertos
     driver
