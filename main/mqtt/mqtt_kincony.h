@@ -11,7 +11,7 @@
 "mqtts://453e5f32c60a48529669859610ab6a88.s1.eu.hivemq.cloud:8883"
 
 /* Topicos de monitoramento */
-#define MQTT_BASE_TOPIC                 "aquapulse/fazenda01/acude01"
+#define MQTT_BASE_TOPIC                 "delinova/o/aquapulse/fazenda01/acude01"
 
 #define MQTT_TOPIC_STATE                MQTT_BASE_TOPIC "/state"
 #define MQTT_TOPIC_CMD                  MQTT_BASE_TOPIC "/cmd"
