@@ -84,6 +84,9 @@ static esp_err_t ota_download_manifest(char *buffer, int buffer_size)
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    esp_http_client_set_header(client, "Cache-Control", "no-cache");
+    esp_http_client_set_header(client, "Pragma", "no-cache");
+    esp_http_client_set_header(client, "User-Agent", "ESP32-OTA");
 
     if (client == NULL)
     {
