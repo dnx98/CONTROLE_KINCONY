@@ -16,7 +16,7 @@ void app_main(void)
     
     Logica_Controle_Iniciar();
     //inicializa o wifi antes do mqtt para garantir que a conexão esteja pronta
-    ESP_ERROR_CHECK(Wifi_Kincony_Init("Montanher", "montanher123"));
+    ESP_ERROR_CHECK(Wifi_Kincony_Init("Dipelnet_Daniel_2.4GHz", "apto0104"));
     //inicia mqtt
     Mqtt_Kincony_Init(MQTT_KINCONY_BROKER_URI);
 

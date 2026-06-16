@@ -30,6 +30,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_crt_bundle.h"
 
 #define TAG "MQTT_KINCONY"
 
@@ -316,6 +317,9 @@ esp_err_t Mqtt_Kincony_Init(const char *broker_uri)
 
     esp_mqtt_client_config_t mqtt_config = {
         .broker.address.uri = broker_uri,
+        .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
+        .credentials.username = "administrador",
+        .credentials.authentication.password = "Administrador2026",
     };
 
     mqtt_client = esp_mqtt_client_init(&mqtt_config);
@@ -347,7 +351,7 @@ esp_err_t Mqtt_Kincony_Init(const char *broker_uri)
         return ret;
     }
 
-    ESP_LOGI(TAG, "MQTT iniciado no broker Mosquitto: %s", broker_uri);
+    ESP_LOGI(TAG, "MQTT iniciado no broker: %s", broker_uri);
 
     return ESP_OK;
 }

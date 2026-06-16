@@ -6,7 +6,9 @@
 #include "esp_err.h"
 
 
-#define MQTT_KINCONY_BROKER_URI "mqtt://test.mosquitto.org:1883"
+//#define MQTT_KINCONY_BROKER_URI "mqtt://test.mosquitto.org:1883"
+#define MQTT_KINCONY_BROKER_URI \
+"mqtts://453e5f32c60a48529669859610ab6a88.s1.eu.hivemq.cloud:8883"
 
 /* Topicos de monitoramento */
 #define MQTT_TOPIC_STATUS                "kincony/status"
