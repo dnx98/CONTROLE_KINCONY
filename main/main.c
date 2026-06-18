@@ -41,6 +41,13 @@ void app_main(void)
         {
             esp_restart();
         }
+        else
+        {
+            // Editado por Eraldo Bispo — nem o WiFi atual nem o backup foram encontrados (ex: ESP
+            // levado para outro local sem nenhuma rede conhecida). Liga um Access Point proprio
+            // para o painel continuar acessivel sem precisar de cabo USB.
+            Wifi_Kincony_IniciarModoEmergenciaAP();
+        }
     }
 
     // Criado por Eraldo Bispo — painel web de configuracao, acessivel pelo IP do ESP (ver no monitor)

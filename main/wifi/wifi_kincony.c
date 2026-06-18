@@ -243,6 +243,47 @@ esp_err_t Wifi_Kincony_Reconectar(void)
     return esp_wifi_connect();
 }
 
+// Criado por Eraldo Bispo — SSID/senha do Access Point de emergencia. Fixos no codigo (e nao no
+// painel/NVS) de proposito: se o ESP nao consegue nem mostrar o painel, nao tem como configurar isso.
+#define WIFI_KINCONY_AP_SSID    "Kincony-Config"
+#define WIFI_KINCONY_AP_SENHA   "kincony2026"
+
+esp_err_t Wifi_Kincony_IniciarModoEmergenciaAP(void)
+{
+    esp_netif_create_default_wifi_ap();
+
+    wifi_config_t ap_config = {0};
+
+    strncpy((char *)ap_config.ap.ssid, WIFI_KINCONY_AP_SSID, sizeof(ap_config.ap.ssid));
+    ap_config.ap.ssid_len = strlen(WIFI_KINCONY_AP_SSID);
+    strncpy((char *)ap_config.ap.password, WIFI_KINCONY_AP_SENHA, sizeof(ap_config.ap.password));
+    ap_config.ap.max_connection = 4;
+    ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+
+    // Editado por Eraldo Bispo — APSTA (nao so AP): mantem a tentativa de reconexao STA em segundo
+    // plano, para o ESP voltar a usar a rede normal automaticamente se ela aparecer de novo
+    esp_err_t ret = esp_wifi_set_mode(WIFI_MODE_APSTA);
+
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Erro ao ativar modo AP de emergencia");
+        return ret;
+    }
+
+    ret = esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Erro ao configurar AP de emergencia");
+        return ret;
+    }
+
+    ESP_LOGW(TAG, "Nenhum WiFi conhecido encontrado. Modo de emergencia ativado:");
+    ESP_LOGW(TAG, "Conecte na rede '%s' (senha: %s) e acesse http://192.168.4.1", WIFI_KINCONY_AP_SSID, WIFI_KINCONY_AP_SENHA);
+
+    return ESP_OK;
+}
+
 esp_err_t Wifi_Kincony_Desconectar(void)
 {
     wifi_conectado = false;
