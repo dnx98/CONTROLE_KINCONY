@@ -84,6 +84,24 @@ static const char ESTILO_AQUAPULSE[] =
     ".rodape a{color:#0e93a6;text-decoration:none}"
     "</style>";
 
+// Editado por Eraldo Bispo — corrige URI de broker salva sem o esquema (mqtt:// ou mqtts://).
+// O esp_mqtt_client falha ao analisar a URI ("Error parse uri") quando recebe so host:porta,
+// sem o protocolo na frente, e o cliente MQTT nem chega a ser criado. Assumimos mqtts:// (TLS)
+// por padrao, pois e o unico tipo de broker usado neste projeto (HiveMQ Cloud, porta 8883).
+static void normalizar_broker_uri(char *uri, size_t tamanho)
+{
+    if (strlen(uri) == 0 || strstr(uri, "://") != NULL)
+    {
+        return;
+    }
+
+    char copia[TAM_BROKER];
+    strncpy(copia, uri, sizeof(copia) - 1);
+    copia[sizeof(copia) - 1] = '\0';
+
+    snprintf(uri, tamanho, "mqtts://%s", copia);
+}
+
 static esp_err_t carregar_ou_gravar_default(
     nvs_handle_t nvs,
     const char *chave,
@@ -141,6 +159,12 @@ esp_err_t Config_Server_Kincony_Iniciar(void)
     carregar_ou_gravar_default(nvs, NVS_KEY_BROKER_URI, config_broker_uri, sizeof(config_broker_uri), CONFIG_KINCONY_MQTT_BROKER_URI);
     carregar_ou_gravar_default(nvs, NVS_KEY_MQTT_USUARIO, config_mqtt_usuario, sizeof(config_mqtt_usuario), CONFIG_KINCONY_MQTT_USER);
     carregar_ou_gravar_default(nvs, NVS_KEY_MQTT_SENHA, config_mqtt_senha, sizeof(config_mqtt_senha), CONFIG_KINCONY_MQTT_PASSWORD);
+
+    // Editado por Eraldo Bispo — auto-corrige aqui um broker que tenha sido salvo sem esquema
+    // por uma versao anterior do painel (ver normalizar_broker_uri), sem precisar reentrar no painel.
+    normalizar_broker_uri(config_broker_uri, sizeof(config_broker_uri));
+    nvs_set_str(nvs, NVS_KEY_BROKER_URI, config_broker_uri);
+    nvs_commit(nvs);
 
     nvs_close(nvs);
 
@@ -338,14 +362,14 @@ static esp_err_t handler_get_login(httpd_req_t *req)
         "<body><div class='card'>"
         "<img class='logo' src='/logo.jpg'>"
         "<h2>Entrar</h2>"
-        "<p class='sub'>Acesse o painel de configura\xC3\xA7\xC3\xA3o do ESP32.</p>"
+        "<p class='sub'>Acesse o painel de configura\xC3\xA7\xC3\xA3o do controlador Kincony.</p>"
         "%s"
         "<form method='POST' action='/login'>"
         "<label>Usu\xC3\xA1rio</label>"
         "<input name='usuario' autocomplete='username'>"
         "<label>Senha</label>"
         "<input name='senha' type='password' autocomplete='current-password'>"
-        "<button type='submit'>Entrar</button>"
+        "<button type='submit'>Entrar</button>" 
         "</form></div></body></html>",
         ESTILO_AQUAPULSE,
         mostrar_erro ? "<p class='erro'>Usu\xC3\xA1rio ou senha inv\xC3\xA1lidos</p>" : "");
@@ -425,13 +449,13 @@ static esp_err_t handler_get_config(httpd_req_t *req)
         "<form method='POST' action='/salvar'>"
         "<label>WiFi SSID</label>"
         "<input name='ssid' value='%s' maxlength='31'>"
-        "<label>WiFi Senha (deixe vazio para manter a atual)</label>"
+        "<label>WiFi Senha </label>"
         "<input name='senha' type='password' maxlength='63'>"
         "<label>Broker MQTT</label>"
         "<input name='broker' value='%s' maxlength='127'>"
-        "<label>Usu\xC3\xA1rio do broker MQTT (deixe vazio se nao precisar)</label>"
+        "<label>Usu\xC3\xA1rio do broker MQTT </label>"
         "<input name='mqtt_usuario' value='%s' maxlength='63'>"
-        "<label>Senha do broker MQTT (deixe vazio para manter a atual)</label>"
+        "<label>Senha do broker MQTT </label>"
         "<input name='mqtt_senha' type='password' maxlength='63'>"
         "<button type='submit'>Salvar e reiniciar</button>"
         "</form>"
@@ -515,6 +539,7 @@ static esp_err_t handler_post_config(httpd_req_t *req)
 
         if (strlen(novo_broker) > 0)
         {
+            normalizar_broker_uri(novo_broker, sizeof(novo_broker));
             nvs_set_str(nvs, NVS_KEY_BROKER_URI, novo_broker);
             strncpy(config_broker_uri, novo_broker, sizeof(config_broker_uri) - 1);
         }
@@ -541,7 +566,7 @@ static esp_err_t handler_post_config(httpd_req_t *req)
     httpd_resp_send(req,
         "<html><body style='font-family:sans-serif;background:#0e2236;color:#fff;"
         "display:flex;justify-content:center;align-items:center;min-height:100vh'>"
-        "<h3>Configura\xC3\xA7\xC3\xA3o salva. Reiniciando o ESP32...</h3>"
+        "<h3>Configura\xC3\xA7\xC3\xA3o salva. Reiniciando o Kincony...</h3>"
         "</body></html>", HTTPD_RESP_USE_STRLEN);
 
     ESP_LOGW(TAG, "Configuracao alterada via painel web. Reiniciando em 2 segundos...");

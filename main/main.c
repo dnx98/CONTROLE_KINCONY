@@ -72,9 +72,23 @@ void app_main(void)
     Entradas_Kincony_Processar();
     // Processar lógica de controle do sistema
     Logica_Controle_Processar();
+    // Editado por Eraldo Bispo - 18/06/2026 22:17 - Atualiza a saida 06 (alarme do controlador)
+    // com base na falha geral (grupos, entradas/saidas offline) e na conexao MQTT/WiFi. Ver
+    // motivo completo no comentario de Logica_Controle_AtualizarAlarme() em logica_controle.c.
+    Logica_Controle_AtualizarAlarme(Mqtt_Kincony_IsConectado(), Wifi_Kincony_IsConectado());
     // Processar MQTT (publicação de monitoramento e recebimento de comandos)
-    Mqtt_Kincony_Processar();       
+    Mqtt_Kincony_Processar();
 
-    vTaskDelay(pdMS_TO_TICKS(5000));
-     }   
+    // Editado por Eraldo Bispo - 18/06/2026 22:17 - Reduzido de 5000ms para 200ms. O comando de
+    // ligar/desligar grupo (via MQTT) so e aplicado na saida dentro de Logica_Controle_Processar(),
+    // chamado uma vez por volta deste loop; com o delay de 5s, o comando ficava ate 5s "parado"
+    // esperando a proxima volta antes do motor realmente partir. O timeout de confirmacao de
+    // partida/parada (LOGICA_TIMEOUT_PARTIDA_MS / LOGICA_TIMEOUT_PARADA_MS, 5000ms) continua sendo
+    // so o prazo para o feedback confirmar - a saida agora liga assim que o comando chega (no
+    // maximo 200ms de atraso), e so cai em FALHA se o feedback nao confirmar dentro do timeout.
+    // Entradas_Kincony_Processar() e Mqtt_Kincony_Processar() ja se autolimitam internamente
+    // (TEMPO_LEITURA_MS / MQTT_PUBLICACAO_MONITORAMENTO_MS), entao rodar o loop mais rapido nao
+    // sobrecarrega o I2C nem o MQTT.
+    vTaskDelay(pdMS_TO_TICKS(200));
+     }
     }
