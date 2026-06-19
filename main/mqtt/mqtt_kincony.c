@@ -4,7 +4,7 @@
  * MQTT do Controle Kincony.
  *
  * Funcao deste modulo:
- * - conectar ao broker Mosquitto;
+ * - conectar ao broker MQTT configurado (qualquer broker, nao so o Mosquitto);
  * - receber comandos MQTT;
  * - encaminhar comandos para a maquina de estado em logica_controle.c;
  * - publicar monitoramento de entradas, saidas, estados e falhas.
@@ -52,6 +52,9 @@ static void tratar_comando_cmd_json(const char *payload);
 static esp_mqtt_client_handle_t mqtt_client = NULL;
 static bool mqtt_conectado = false;
 static TickType_t mqtt_tick_ultima_publicacao = 0;
+// Editado por Eraldo Bispo — guarda a URI do broker configurada (pode ser qualquer broker, nao
+// so o Mosquitto), para o log de "MQTT_EVENT_CONNECTED" mostrar o broker real.
+static char mqtt_broker_uri[128] = {0};
 
 static bool topico_igual(const esp_mqtt_event_handle_t event, const char *topico)
 {
@@ -258,7 +261,7 @@ static void Mqtt_Kincony_EventHandler(
         case MQTT_EVENT_CONNECTED:
         {
             mqtt_conectado = true;
-            ESP_LOGI(TAG, "MQTT conectado ao Mosquitto");
+            ESP_LOGI(TAG, "MQTT conectado ao broker: %s", mqtt_broker_uri);
 
             char status_payload[96];
             montar_status_payload(status_payload, sizeof(status_payload), "online");
@@ -322,19 +325,19 @@ static void Mqtt_Kincony_EventHandler(
     }
 }
 
-esp_err_t Mqtt_Kincony_Init(const char *broker_uri)
+esp_err_t Mqtt_Kincony_Init(const char *broker_uri, const char *usuario, const char *senha)
 {
     if (broker_uri == NULL)
     {
         return ESP_ERR_INVALID_ARG;
     }
 
+    strncpy(mqtt_broker_uri, broker_uri, sizeof(mqtt_broker_uri) - 1);
+    mqtt_broker_uri[sizeof(mqtt_broker_uri) - 1] = '\0';
+
 esp_mqtt_client_config_t mqtt_config = {
     .broker.address.uri = broker_uri,
     .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
-
-    .credentials.username = "administrador",
-    .credentials.authentication.password = "Administrador2026",
 
     .session.last_will.topic = MQTT_TOPIC_STATUS,
     .session.last_will.msg = "{\"status\":\"offline\",\"fw\":\"" FIRMWARE_VERSION "\"}",
@@ -342,6 +345,18 @@ esp_mqtt_client_config_t mqtt_config = {
     .session.last_will.qos = MQTT_QOS_MONITORAMENTO,
     .session.last_will.retain = true,
 };
+
+    // Editado por Eraldo Bispo — credenciais do broker agora vem do painel web (NVS), nao mais
+    // fixas no codigo. So define se nao vier vazio (broker sem autenticacao fica sem credenciais).
+    if (usuario != NULL && strlen(usuario) > 0)
+    {
+        mqtt_config.credentials.username = usuario;
+    }
+
+    if (senha != NULL && strlen(senha) > 0)
+    {
+        mqtt_config.credentials.authentication.password = senha;
+    }
 
     mqtt_client = esp_mqtt_client_init(&mqtt_config);
 

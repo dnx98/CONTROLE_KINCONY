@@ -20,6 +20,7 @@ idf_component_register(SRCS
     "ota"
     "logica_controle"
     "config_server"
+    # Editado por Eraldo Bispo — corrigidos nomes dos componentes gerenciados para IDF v6: esp-mqtt e cjson saíram do core
     REQUIRES
     freertos
     driver
@@ -27,11 +28,11 @@ idf_component_register(SRCS
     esp_wifi
     esp_event
     nvs_flash
-    mqtt
+    espressif__esp-mqtt
     esp_http_client
     esp_https_ota
     esp-tls
-    json
+    espressif__cjson
     app_update
     # Criado por Eraldo Bispo — necessarios pelo painel web (config_server_kincony.c)
     esp_http_server
@@ -40,4 +41,12 @@ idf_component_register(SRCS
     # Criado por Eraldo Bispo — logo AquaPulse embutida no firmware, servida em /logo.jpg
     EMBED_FILES
     "config_server/logo_aquapulse.jpg"
+)
+
+# Criado por Eraldo Bispo — o ninja gerado pelo CMake so reconfigura sozinho (e regera o
+# sdkconfig.h) quando arquivos como CMakeLists.txt ou sdkconfig mudam; Kconfig.projbuild nao
+# fazia parte dessa lista. Isso forca o ninja a reconfigurar sempre que Kconfig.projbuild for
+# editado, mesmo sem rodar idf.py reconfigure manualmente.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/Kconfig.projbuild"
 )
