@@ -21,7 +21,7 @@ void app_main(void)
 
     
 
-     RTC_DS1307_Iniciar();
+    ESP_ERROR_CHECK(RTC_DS1307_Iniciar()); 
 
     // Criado por Eraldo Bispo — carrega WiFi/broker da NVS (ou do menuconfig na primeira vez)
     ESP_ERROR_CHECK(Config_Server_Kincony_Iniciar());
@@ -68,16 +68,7 @@ void app_main(void)
     // Processar MQTT (publicação de monitoramento e recebimento de comandos)
     Mqtt_Kincony_Processar();     
     
- if (RTC_DS1307_LerHorario(&horario) == ESP_OK)
-        {
-            printf("RTC: %02d/%02d/%04d %02d:%02d:%02d\n",
-                   horario.dia,
-                   horario.mes,
-                   horario.ano,
-                   horario.hora,
-                   horario.minuto,
-                   horario.segundo);
-        }
+    RTC_DS1307_Processar();
 
 
     vTaskDelay(pdMS_TO_TICKS(5000));

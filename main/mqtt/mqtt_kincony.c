@@ -38,6 +38,8 @@
 #include "esp_system.h"
 #include "ota_github.h"
 
+#include "rtc_ds1307.h"
+
 extern uint8_t versao_firmware_atual;
 
 static void tratar_comando_cmd_json(const char *payload);
@@ -77,164 +79,36 @@ static void copiar_evento_para_string(char *destino, size_t tamanho_destino, con
     destino[copiar] = '\0';
 }
 
-static void string_maiuscula(char *texto)
+static void publicar_ack_comando(
+    uint8_t grupo,
+    const char *acao,
+    esp_err_t ret
+)
 {
-    if (texto == NULL)
-    {
-        return;
-    }
+    char payload[256];
 
-    for (uint16_t i = 0; texto[i] != '\0'; i++)
-    {
-        texto[i] = (char)toupper((unsigned char)texto[i]);
-    }
+    snprintf(
+        payload,
+        sizeof(payload),
+        "{"
+            "\"type\":\"command_ack\","
+            "\"group\":%u,"
+            "\"action\":\"%s\","
+            "\"result\":\"%s\","
+            "\"remote\":%s"
+        "}",
+        grupo,
+        acao,
+        (ret == ESP_OK) ? "ok" : "blocked",
+        Logica_Controle_IsRemoto() ? "true" : "false"
+    );
+
+    Mqtt_Kincony_Publicar(
+        MQTT_TOPIC_STATE,
+        payload
+    );
 }
 
-static bool payload_liga(const char *payload)
-{
-    if (payload == NULL)
-    {
-        return false;
-    }
-
-    return (strcmp(payload, "ON") == 0 ||
-            strcmp(payload, "LIGA") == 0 ||
-            strcmp(payload, "LIGAR") == 0 ||
-            strcmp(payload, "1") == 0 ||
-            strcmp(payload, "TRUE") == 0);
-}
-
-static bool payload_desliga(const char *payload)
-{
-    if (payload == NULL)
-    {
-        return false;
-    }
-
-    return (strcmp(payload, "OFF") == 0 ||
-            strcmp(payload, "DESLIGA") == 0 ||
-            strcmp(payload, "DESLIGAR") == 0 ||
-            strcmp(payload, "0") == 0 ||
-            strcmp(payload, "FALSE") == 0);
-}
-
-static void publicar_ack_comando(uint8_t grupo, const char *acao, esp_err_t ret)
-{
-    char payload[128];
-
-    snprintf(payload, sizeof(payload),
-             "{\"grupo\":%u,\"acao\":\"%s\",\"resultado\":\"%s\",\"remoto\":%u}",
-             grupo,
-             acao,
-             (ret == ESP_OK) ? "OK" : "BLOQUEADO",
-             Logica_Controle_IsRemoto() ? 1 : 0);
-
-    Mqtt_Kincony_Publicar("kincony/comando/ack", payload);
-}
-
-static void tratar_comando_grupo_texto(const char *payload_original)
-{
-    char payload[64];
-    copiar_evento_para_string(payload, sizeof(payload), payload_original, (int)strlen(payload_original));
-    string_maiuscula(payload);
-
-    /*
-     * Formatos aceitos:
-     *   1=ON
-     *   1=OFF
-     *   1 ON
-     *   1 OFF
-     *   G1=ON
-     *   G1=OFF
-     *   ALL=OFF
-     *   RESET
-     */
-
-    if (strcmp(payload, "RESET") == 0 || strcmp(payload, "RESET_FALHAS") == 0)
-    {
-        Logica_Controle_ResetarFalhas();
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"acao\":\"RESET_FALHAS\",\"resultado\":\"OK\"}");
-        return;
-    }
-
-    if (strcmp(payload, "ALL=OFF") == 0 || strcmp(payload, "TODOS=OFF") == 0 || strcmp(payload, "DESLIGAR_TODOS") == 0)
-    {
-        Logica_Controle_DesligarTodos();
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"acao\":\"DESLIGAR_TODOS\",\"resultado\":\"OK\"}");
-        return;
-    }
-
-    char *separador = strchr(payload, '=');
-    if (separador == NULL)
-    {
-        separador = strchr(payload, ' ');
-    }
-
-    if (separador == NULL)
-    {
-        ESP_LOGW(TAG, "Comando invalido: %s", payload);
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"resultado\":\"COMANDO_INVALIDO\"}");
-        return;
-    }
-
-    *separador = '\0';
-    char *grupo_txt = payload;
-    char *acao_txt = separador + 1;
-
-    if (grupo_txt[0] == 'G')
-    {
-        grupo_txt++;
-    }
-
-    int grupo_num = atoi(grupo_txt);
-
-    if (grupo_num < 1 || grupo_num > LOGICA_CONTROLE_NUM_GRUPOS)
-    {
-        ESP_LOGW(TAG, "Grupo invalido: %d", grupo_num);
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"resultado\":\"GRUPO_INVALIDO\"}");
-        return;
-    }
-
-    esp_err_t ret;
-
-    if (payload_liga(acao_txt))
-    {
-        ret = Logica_Controle_SetComandoGrupo((logica_grupo_t)(grupo_num - 1), true);
-        publicar_ack_comando((uint8_t)grupo_num, "ON", ret);
-    }
-    else if (payload_desliga(acao_txt))
-    {
-        ret = Logica_Controle_SetComandoGrupo((logica_grupo_t)(grupo_num - 1), false);
-        publicar_ack_comando((uint8_t)grupo_num, "OFF", ret);
-    }
-    else
-    {
-        ESP_LOGW(TAG, "Acao invalida: %s", acao_txt);
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"resultado\":\"ACAO_INVALIDA\"}");
-    }
-}
-
-static void tratar_comando_geral(const char *payload_original)
-{
-    char payload[64];
-    copiar_evento_para_string(payload, sizeof(payload), payload_original, (int)strlen(payload_original));
-    string_maiuscula(payload);
-
-    if (strcmp(payload, "RESET") == 0 || strcmp(payload, "RESET_FALHAS") == 0)
-    {
-        Logica_Controle_ResetarFalhas();
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"acao\":\"RESET_FALHAS\",\"resultado\":\"OK\"}");
-    }
-    else if (strcmp(payload, "OFF") == 0 || strcmp(payload, "DESLIGAR_TODOS") == 0 || strcmp(payload, "ALL_OFF") == 0)
-    {
-        Logica_Controle_DesligarTodos();
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"acao\":\"DESLIGAR_TODOS\",\"resultado\":\"OK\"}");
-    }
-    else
-    {
-        Mqtt_Kincony_Publicar("kincony/comando/ack", "{\"resultado\":\"COMANDO_GERAL_INVALIDO\"}");
-    }
-}
 
 static void montar_status_payload(char *buffer, size_t tamanho, const char *status)
 {
@@ -275,6 +149,8 @@ static void Mqtt_Kincony_EventHandler(
             esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_CMD, MQTT_QOS_COMANDO);
             ESP_LOGI(TAG, "Inscrito: %s", MQTT_TOPIC_CMD);
 
+            RTC_DS1307_SolicitarSincronizacaoInternet();
+
             Mqtt_Kincony_PublicarMonitoramento();
             break;
         }
@@ -286,29 +162,40 @@ static void Mqtt_Kincony_EventHandler(
             break;
         }
 
-        case MQTT_EVENT_DATA:
-        {
-            char topico[96];
-            char payload[128];
+case MQTT_EVENT_DATA:
+{
+    char topico[96];
+    char payload[256];
 
-            copiar_evento_para_string(topico, sizeof(topico), event->topic, event->topic_len);
-            copiar_evento_para_string(payload, sizeof(payload), event->data, event->data_len);
+    copiar_evento_para_string(
+        topico,
+        sizeof(topico),
+        event->topic,
+        event->topic_len
+    );
 
-            ESP_LOGI(TAG, "Topico: %s", topico);
-            ESP_LOGI(TAG, "Payload: %s", payload);
+    copiar_evento_para_string(
+        payload,
+        sizeof(payload),
+        event->data,
+        event->data_len
+    );
 
-            if (topico_igual(event, MQTT_TOPIC_CMD))
-            {
-                tratar_comando_cmd_json(payload);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Topico de comando nao tratado: %s", topico);
-            }
+    ESP_LOGI(TAG, "Topico: %s", topico);
+    ESP_LOGI(TAG, "Payload: %s", payload);
 
-            Mqtt_Kincony_PublicarMonitoramento();
-            break;
-        }
+    if (topico_igual(event, MQTT_TOPIC_CMD))
+    {
+        tratar_comando_cmd_json(payload);
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Topico de comando nao tratado: %s", topico);
+    }
+
+    Mqtt_Kincony_PublicarMonitoramento();
+    break;
+}
 
         case MQTT_EVENT_ERROR:
         {
@@ -506,7 +393,48 @@ static void tratar_comando_cmd_json(const char *payload)
     if (src != NULL && cJSON_IsString(src))
     {
         ESP_LOGI(TAG, "Comando origem: %s", src->valuestring);
+
+        
     }
+
+/*
+ * Primeiro oferece o JSON ao modulo RTC/timers.
+ *
+ * Se o comando for timer_set, timer_get, rtc_sync etc.,
+ * o proprio rtc_ds1307 trata e retorna uma resposta JSON.
+ *
+ * Se nao for um comando de RTC/timer, retorna
+ * ESP_ERR_NOT_SUPPORTED e o MQTT continua tratando
+ * reset, OTA e comandos manuais.
+ */
+char resposta_rtc[768] = {0};
+
+esp_err_t ret_rtc = RTC_DS1307_ProcessarComandoMQTT(
+    payload,
+    resposta_rtc,
+    sizeof(resposta_rtc)
+);
+
+if (ret_rtc != ESP_ERR_NOT_SUPPORTED)
+{
+    ESP_LOGI(
+        TAG,
+        "Comando RTC processado: ret=%s resposta=%s",
+        esp_err_to_name(ret_rtc),
+        resposta_rtc
+    );
+
+    if (resposta_rtc[0] != '\0')
+    {
+        Mqtt_Kincony_Publicar(
+            MQTT_TOPIC_STATUS_RTC,
+            resposta_rtc
+        );
+    }
+
+    cJSON_Delete(root);
+    return;
+}
 
     if (strcmp(action->valuestring, "reset_esp") == 0)
     {
@@ -570,21 +498,62 @@ static void tratar_comando_cmd_json(const char *payload)
     }
 
 
-    if (grupo == 0)
+if (grupo == 0)
+{
+    /*
+     * Grupo zero representa todos os grupos.
+     * O override manual so eh registrado quando
+     * a logica realmente aceita o comando.
+     */
+    for (uint8_t i = 0; i < LOGICA_CONTROLE_NUM_GRUPOS; i++)
     {
-        for (uint8_t i = 0; i < LOGICA_CONTROLE_NUM_GRUPOS; i++)
+        esp_err_t ret = Logica_Controle_SetComandoGrupo(
+            (logica_grupo_t)i,
+            ligar
+        );
+
+        if (ret == ESP_OK)
         {
-            Logica_Controle_SetComandoGrupo((logica_grupo_t)i, ligar);
+            RTC_DS1307_RegistrarComandoManual(i + 1);
         }
+
+        publicar_ack_comando(
+            i + 1,
+            ligar ? "ON" : "OFF",
+            ret
+        );
     }
-    else if (grupo >= 1 && grupo <= LOGICA_CONTROLE_NUM_GRUPOS)
+}
+else if (grupo >= 1 && grupo <= LOGICA_CONTROLE_NUM_GRUPOS)
+{
+    esp_err_t ret = Logica_Controle_SetComandoGrupo(
+        (logica_grupo_t)(grupo - 1),
+        ligar
+    );
+
+    if (ret == ESP_OK)
     {
-        Logica_Controle_SetComandoGrupo((logica_grupo_t)(grupo - 1), ligar);
+        RTC_DS1307_RegistrarComandoManual((uint8_t)grupo);
     }
-    else
-    {
-        ESP_LOGW(TAG, "Grupo invalido: %d", grupo);
-    }
+
+    publicar_ack_comando(
+        (uint8_t)grupo,
+        ligar ? "ON" : "OFF",
+        ret
+    );
+}
+else
+{
+    ESP_LOGW(TAG, "Grupo invalido: %d", grupo);
+
+Mqtt_Kincony_Publicar(
+    MQTT_TOPIC_STATE,
+    "{"
+        "\"type\":\"command_ack\","
+        "\"result\":\"invalid_group\""
+    "}"
+);
+}
 
     cJSON_Delete(root);
 }

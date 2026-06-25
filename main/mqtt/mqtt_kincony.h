@@ -16,11 +16,7 @@
 #define MQTT_TOPIC_STATE                MQTT_BASE_TOPIC "/state"
 #define MQTT_TOPIC_CMD                  MQTT_BASE_TOPIC "/cmd"
 #define MQTT_TOPIC_STATUS               MQTT_BASE_TOPIC "/status"
-
-#define MQTT_PUBLICACAO_MONITORAMENTO_MS 1000
-
-/* Mantido por compatibilidade com seu codigo antigo */
-#define MQTT_TOPIC_COMANDO_SAIDA         MQTT_TOPIC_COMANDO_GRUPO
+#define MQTT_TOPIC_STATUS_RTC           MQTT_TOPIC_STATUS "/rtc"
 
 /* Periodo padrao para publicar monitoramento */
 #define MQTT_PUBLICACAO_MONITORAMENTO_MS 1000
