@@ -22,4 +22,10 @@ uint8_t Wifi_Kincony_GetTentativas(void);
 esp_err_t Wifi_Kincony_Reconectar(void);
 esp_err_t Wifi_Kincony_Desconectar(void);
 
+// Criado por Eraldo Bispo — modo de emergencia: liga um Access Point proprio do ESP32 (alem do
+// STA, que continua tentando reconectar em segundo plano) para quando nenhuma rede WiFi conhecida
+// (nem a atual nem o backup) for encontrada. Conecte na rede "Kincony-Config" e acesse
+// http://192.168.4.1 para corrigir o WiFi salvo, sem precisar de cabo USB.
+esp_err_t Wifi_Kincony_IniciarModoEmergenciaAP(void);
+
 #endif

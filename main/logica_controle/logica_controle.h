@@ -92,9 +92,17 @@ extern bool logica_modo_remoto;
 extern bool logica_falha_geral;
 extern uint8_t logica_mascara_grupos_ligados;
 extern uint8_t logica_mascara_falhas;
+// Criado por Eraldo Bispo - 18/06/2026 22:17 - estado atual do alarme geral (saida 06)
+extern bool logica_alarme_ativo;
 
 esp_err_t Logica_Controle_Iniciar(void);
 void Logica_Controle_Processar(void);
+
+// Criado por Eraldo Bispo - 18/06/2026 22:17 - liga/desliga a saida 06 (alarme do controlador).
+// Chamar a cada volta do loop principal, passando o status atual de MQTT e WiFi. Ver motivo
+// completo no comentario da implementacao em logica_controle.c.
+void Logica_Controle_AtualizarAlarme(bool mqtt_conectado, bool wifi_conectado);
+bool Logica_Controle_IsAlarmeAtivo(void);
 
 /* Funcoes que o MQTT vai usar futuramente */
 esp_err_t Logica_Controle_SetComandoGrupo(logica_grupo_t grupo, bool ligar);
